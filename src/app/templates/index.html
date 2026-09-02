@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,9 +11,93 @@
 
 <body>
 
-    <h1>Downlids</h1>
+    <main class="contenedor">
 
-    <p>Descarga recursos multimedia fácilmente.</p>
+        <h1>Downlids</h1>
+        <p class="subtitulo">
+            Descarga videos desde múltiples plataformas.
+        </p>
 
+        <section class="busqueda">
+
+            <form id="form-metadatos">
+
+                <input
+                    type="url"
+                    id="url"
+                    placeholder="Pega aquí el enlace del video..."
+                    required
+                >
+
+                <button type="submit" class="btn-validarUrl">
+                    Obtener información
+                </button>
+
+            </form>
+
+            <div id="mensaje" class="mensaje oculto"></div>
+
+        </section>
+
+
+        <section id="resultado" class="resultado oculto">
+
+            <div class="cabecera-video">
+
+                <img
+                    id="miniatura"
+                    src=""
+                    alt="Miniatura"
+                >
+
+                <div class="informacion">
+
+                    <h2 id="titulo"></h2>
+
+                    <p id="autor"></p>
+
+                    <p id="duracion"></p>
+
+                    <p id="vistas"></p>
+
+                    <p id="plataforma"></p>
+
+                </div>
+
+            </div>
+
+            <h3>Formatos disponibles</h3>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>Calidad</th>
+                        <th>Extensión</th>
+                        <th>Tipo</th>
+                        <th>Tamaño</th>
+                        <th>Acción</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="tabla-formatos">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+    
+    <script src="/static/js/utilidades.js"></script>
+    <script src="/static/js/metadatos.js"></script>
+    <script src="/static/js/formatos.js"></script>
+    <script src="/static/js/descarga.js"></script>
+    <script src="/static/js/app.js"></script>
 </body>
+
 </html>

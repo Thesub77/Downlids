@@ -41,6 +41,16 @@ class MapeoMetadatos:
 
     def _obtener_calidad(self, formato: dict) -> str:
 
+        tiene_video = formato.get("vcodec") != "none"
+
+        if not tiene_video:
+            abr = formato.get("abr")
+
+            if abr:
+                return f"{int(abr)} kbps"
+
+            return "Audio"
+
         return (
             formato.get("format_note")
             or formato.get("resolution")
@@ -96,18 +106,43 @@ class MapeoMetadatos:
 
     def _mapear_formatos(self, formatos: list[dict]) -> list[FormatoVideo]:
 
-        formatos_validos = []
+        #formatos_validos = []
+        videos = []
+        audios = []
 
         for formato in formatos:
 
-            if not self._validar_formato(formato):
+            #if not self._validar_formato(formato):
+            #    continue
+
+            modelo = self._mapear_formato(formato)
+
+            if modelo.tipo == TipoFormato.SOLO_VIDEO:
                 continue
+            
+            if modelo.tipo == TipoFormato.VIDEO_AUDIO:
+                videos.append(modelo)
 
-            formatos_validos.append(
-                self._mapear_formato(formato)
-        )
+            elif modelo.tipo == TipoFormato.SOLO_AUDIO:
+                audios.append((modelo, formato))
 
-        return formatos_validos
+            #formatos_validos.append(
+            #    self._mapear_formato(formato)
+            #)
+
+        mejor_audio = None
+
+        if audios:
+            mejor_audio = max(audios, key=lambda item: item[1].get("abr") or 0)[0]
+
+        resultado = videos
+
+        if mejor_audio:
+            resultado.insert(0, mejor_audio)
+
+        return resultado
+
+        #return formatos_validos
 
     def _obtener_titulo(self, info: dict) -> str:
         return info.get("title", "")
@@ -151,7 +186,8 @@ class MapeoMetadatos:
         return Plataforma.DESCONOCIDA
     
 
-    def _validar_formato(self, formato: dict) -> bool:
-        return (
-            formato.get("vcodec") != "none" and formato.get("acodec") != "none"
-    )
+    #def _validar_formato(self, formato: dict) -> bool:
+    #    return (
+    #        #formato.get("vcodec") != "none" and formato.get("acodec") != "none"
+    #        formato.get("acodec") != "none"
+    #)

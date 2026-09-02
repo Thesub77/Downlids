@@ -15,7 +15,7 @@ router = APIRouter(
 servicio = ServicioMetadatos()
 
 
-@router.post("", response_model=RespuestaMetadatos)
+@router.post("/metadatos", response_model=RespuestaMetadatos)
 async def obtener_metadatos(solicitud: SolicitudMetadatos):
     return servicio.obtener_metadatos(
         str(solicitud.url)
