@@ -2,7 +2,8 @@ import tempfile
 from pathlib import Path
 
 from yt_dlp import YoutubeDL
-from yt_dlp import YoutubeDL
+from app.utils.archivos import eliminar_carpeta_temporal
+
 
 class YtdlpAdaptador:
 
@@ -11,7 +12,12 @@ class YtdlpAdaptador:
         opciones = {
             "quiet": True,
             "no_warnings": True,
-            "skip_download": True
+            "skip_download": True,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            }
         }
 
         with YoutubeDL(opciones) as ydl:
@@ -24,25 +30,32 @@ class YtdlpAdaptador:
 
         opciones = {
             "format": formato,
-            "outtmpl": str(Path(carpeta_temporal) / "%(title)s.%(ext)s"),
+            "outtmpl": str(carpeta_temporal / "%(title)s.%(ext)s"),
             "quiet": True,
-            "no_warnings": True
+            "no_warnings": True,
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"]
+                }
+            }
         }
 
+        try:
+            with YoutubeDL(opciones) as ydl:
+                informacion = ydl.extract_info(url, download=True)
+                descargas = informacion.get("requested_downloads", [])
 
-        with YoutubeDL(opciones) as ydl:
-            informacion = ydl.extract_info(url, download=True)
-            #ruta = ydl.prepare_filename(informacion)
-            descargas = informacion.get("requested_downloads", [])
+                if not descargas:
+                    raise Exception("No hubo archivos descargados.")
 
-            if not descargas:
-                raise Exception("No hubo archivos descargados.")
+                ruta = descargas[0].get("filepath")
 
-            ruta = descargas[0].get("filepath")
+                if ruta is None:
+                    raise Exception("No se encontró la ruta del archivo.")
 
-            if ruta is None:
-                raise Exception("No se encontró la ruta del archivo.")
-
-        return ruta
+            return ruta
+        except Exception:
+            eliminar_carpeta_temporal(carpeta_temporal)
+            raise
 
         

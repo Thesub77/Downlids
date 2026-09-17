@@ -1,8 +1,7 @@
-from fastapi import APIRouter
-from fastapi.responses import FileResponse
 from pathlib import Path
-from fastapi import BackgroundTasks
-
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 
 from app.services.descarga.servicioDescarga import ServicioDescarga
 from app.utils.archivos import eliminar_carpeta_temporal
@@ -14,13 +13,18 @@ servicio = ServicioDescarga()
 
 
 @router.get("/descarga")
-async def descargar(url: str, formato: str, background_task: BackgroundTasks):
-
-    ruta = servicio.descargar(url, formato)
-    background_task.add_task(eliminar_carpeta_temporal, ruta)
+def descargar(url: str, formato: str):
+    try:
+        ruta = servicio.descargar(url, formato)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al procesar la descarga: {str(e)}"
+        )
 
     return FileResponse(
         path=ruta,
         filename=Path(ruta).name,
-        media_type="application/octet-stream"
-    )
+        media_type="application/octet-stream",
+        background=BackgroundTask(eliminar_carpeta_temporal, ruta)
+    )
