@@ -58,10 +58,10 @@ class MapeoMetadatos:
         )
 
 
-    def _obtener_tipo(self, formato: dict) -> TipoFormato:
+    def _obtener_tipo(self, formato: dict) -> TipoFormato | None:
 
-        tiene_video = formato.get("vcodec") != "none"
-        tiene_audio = formato.get("acodec") != "none"
+        tiene_video = bool(formato.get("vcodec") and formato.get("vcodec") != "none")
+        tiene_audio = bool(formato.get("acodec") and formato.get("acodec") != "none")
 
         if tiene_video and tiene_audio:
             return TipoFormato.VIDEO_AUDIO
@@ -69,7 +69,11 @@ class MapeoMetadatos:
         if tiene_video:
             return TipoFormato.SOLO_VIDEO
 
-        return TipoFormato.SOLO_AUDIO
+        if tiene_audio:
+            return TipoFormato.SOLO_AUDIO
+
+        return None
+
 
 
     def _obtener_extension(self, formato: dict) -> str:
@@ -111,14 +115,11 @@ class MapeoMetadatos:
         audios = []
 
         for formato in formatos:
-
-            #if not self._validar_formato(formato):
-            #    continue
+            tipo = self._obtener_tipo(formato)
+            if tipo is None or tipo == TipoFormato.SOLO_VIDEO:
+                continue
 
             modelo = self._mapear_formato(formato)
-
-            if modelo.tipo == TipoFormato.SOLO_VIDEO:
-                continue
             
             if modelo.tipo == TipoFormato.VIDEO_AUDIO:
                 videos.append(modelo)
