@@ -8,7 +8,6 @@ from app.models.metadatos import (
 
 class MapeoMetadatos:
 
-
     def mapear(self, info: dict) -> RespuestaMetadatos:
 
         return RespuestaMetadatos(
@@ -21,84 +20,113 @@ class MapeoMetadatos:
             formatos=self._mapear_formatos(info.get("formats", []))
         )
 
-    def _mapear_formato(self, formato: dict) -> FormatoVideo:
+    def _mapear_formatos(self, formatos: list[dict]) -> list[FormatoVideo]:
+        audios = []
+        videos_por_altura = {}
 
-        #if not self._validar_formato(formato):
-        #    return None
+        for formato in formatos:
+            vcodec = formato.get("vcodec")
+            acodec = formato.get("acodec")
 
-        return FormatoVideo(
-            id=self._obtener_id(formato),
-            calidad=self._obtener_calidad(formato),
-            extension=self._obtener_extension(formato),
-            tipo=self._obtener_tipo(formato),
-            tamano=self._obtener_tamano(formato)
-        )
+            # Formatos de solo audio
+            if (not vcodec or vcodec == "none") and (acodec and acodec != "none"):
+                if formato.get("format_note") != "storyboard" and formato.get("ext") != "mhtml":
+                    audios.append(formato)
+                continue
 
+            # Formatos de video (con o sin audio)
+            if vcodec and vcodec != "none":
+                altura = formato.get("height")
+                if not altura:
+                    resolucion = formato.get("resolution") or ""
+                    if "x" in resolucion:
+                        try:
+                            altura = int(resolucion.split("x")[1])
+                        except Exception:
+                            altura = None
 
-    def _obtener_id(self, formato: dict) -> str:
-        return formato.get("format_id", "")
+                if not altura:
+                    continue
 
+                tamano = formato.get("filesize") or formato.get("filesize_approx") or 0
+                tiene_tamano = 1 if tamano > 0 else 0
+                es_mp4 = 1 if formato.get("ext", "").lower() == "mp4" else 0
+                es_avc = 1 if "avc" in str(vcodec).lower() else 0
+                tbr = formato.get("tbr") or 0
 
-    def _obtener_calidad(self, formato: dict) -> str:
+                # Criterio de seleccion: tener tamaño, contenedor MP4, codec H264/AVC, tamaño y bitrate
+                puntuacion = (tiene_tamano, es_mp4, es_avc, tamano, tbr)
 
-        tiene_video = formato.get("vcodec") != "none"
+                if altura not in videos_por_altura or puntuacion > videos_por_altura[altura]["puntuacion"]:
+                    videos_por_altura[altura] = {
+                        "formato": formato,
+                        "puntuacion": puntuacion
+                    }
 
-        if not tiene_video:
-            abr = formato.get("abr")
+        mejor_audio = None
+        bytes_audio = 0
+        if audios:
+            mejor_audio = max(audios, key=lambda a: a.get("abr") or a.get("tbr") or 0)
+            bytes_audio = mejor_audio.get("filesize") or mejor_audio.get("filesize_approx") or 0
 
-            if abr:
-                return f"{int(abr)} kbps"
+        lista_videos = []
+        for altura in sorted(videos_por_altura.keys(), reverse=True):
+            f = videos_por_altura[altura]["formato"]
 
-            return "Audio"
+            v_bytes = f.get("filesize") or f.get("filesize_approx") or 0
+            tiene_audio_propio = bool(f.get("acodec") and f.get("acodec") != "none")
 
-        return (
-            formato.get("format_note")
-            or formato.get("resolution")
-            or "Desconocida"
-        )
+            if tiene_audio_propio:
+                bytes_totales = v_bytes
+            else:
+                bytes_totales = (v_bytes + bytes_audio) if v_bytes else 0
 
+            calidad = self._formatear_etiqueta_calidad(altura)
 
-    def _obtener_tipo(self, formato: dict) -> TipoFormato | None:
+            lista_videos.append(
+                FormatoVideo(
+                    id=f.get("format_id", ""),
+                    calidad=calidad,
+                    extension="MP4",
+                    tipo=TipoFormato.VIDEO_AUDIO,
+                    tamano=self._formatear_bytes(bytes_totales) if bytes_totales else None
+                )
+            )
 
-        tiene_video = bool(formato.get("vcodec") and formato.get("vcodec") != "none")
-        tiene_audio = bool(formato.get("acodec") and formato.get("acodec") != "none")
+        resultado = lista_videos
 
-        if tiene_video and tiene_audio:
-            return TipoFormato.VIDEO_AUDIO
+        if mejor_audio:
+            abr = mejor_audio.get("abr")
+            etiqueta_audio = f"Audio ({int(abr)} kbps)" if abr else "Audio"
+            ext_audio = mejor_audio.get("ext", "m4a").upper()
 
-        if tiene_video:
-            return TipoFormato.SOLO_VIDEO
+            resultado.insert(
+                0,
+                FormatoVideo(
+                    id="bestaudio",
+                    calidad=etiqueta_audio,
+                    extension=ext_audio,
+                    tipo=TipoFormato.SOLO_AUDIO,
+                    tamano=self._formatear_bytes(bytes_audio) if bytes_audio else None
+                )
+            )
 
-        if tiene_audio:
-            return TipoFormato.SOLO_AUDIO
+        return resultado
 
-        return None
-
-
-
-    def _obtener_extension(self, formato: dict) -> str:
-        return formato.get("ext", "").upper()
-
-
-    def _obtener_tamano(self, formato: dict) -> str | None:
-
-        bytes_ = (
-            formato.get("filesize")
-            or formato.get("filesize_approx")
-        )
-
-        if not bytes_:
-            return None
-
-        return self._formatear_bytes(bytes_)
-
+    def _formatear_etiqueta_calidad(self, altura: int) -> str:
+        if altura >= 2160:
+            return f"{altura}p (4K)"
+        if altura == 1440:
+            return f"{altura}p (2K)"
+        if altura == 1080:
+            return f"{altura}p (Full HD)"
+        if altura == 720:
+            return f"{altura}p (HD)"
+        return f"{altura}p"
 
     def _formatear_bytes(self, bytes_: int) -> str:
-
         unidades = ["B", "KB", "MB", "GB"]
-
         tamano = float(bytes_)
-
         indice = 0
 
         while tamano >= 1024 and indice < len(unidades) - 1:
@@ -107,50 +135,10 @@ class MapeoMetadatos:
 
         return f"{tamano:.1f} {unidades[indice]}"
 
-
-    def _mapear_formatos(self, formatos: list[dict]) -> list[FormatoVideo]:
-
-        #formatos_validos = []
-        videos = []
-        audios = []
-
-        for formato in formatos:
-            tipo = self._obtener_tipo(formato)
-            if tipo is None or tipo == TipoFormato.SOLO_VIDEO:
-                continue
-
-            modelo = self._mapear_formato(formato)
-            
-            if modelo.tipo == TipoFormato.VIDEO_AUDIO:
-                videos.append(modelo)
-
-            elif modelo.tipo == TipoFormato.SOLO_AUDIO:
-                audios.append((modelo, formato))
-
-            #formatos_validos.append(
-            #    self._mapear_formato(formato)
-            #)
-
-        mejor_audio = None
-
-        if audios:
-            mejor_audio = max(audios, key=lambda item: item[1].get("abr") or 0)[0]
-
-        resultado = videos
-
-        if mejor_audio:
-            resultado.insert(0, mejor_audio)
-
-        return resultado
-
-        #return formatos_validos
-
     def _obtener_titulo(self, info: dict) -> str:
         return info.get("title", "")
 
-
     def _obtener_autor(self, info: dict) -> str:
-
         return (
             info.get("uploader")
             or info.get("channel")
@@ -158,21 +146,16 @@ class MapeoMetadatos:
             or "Autor desconocido"
         )
 
-
     def _obtener_duracion(self, info: dict) -> int:
         return info.get("duration") or 0
-
 
     def _obtener_vistas(self, info: dict) -> int:
         return info.get("view_count") or 0
 
-
     def _obtener_miniatura(self, info: dict) -> str:
         return info.get("thumbnail", "")
 
-
     def _obtener_plataforma(self, info: dict) -> Plataforma:
-
         extractor = info.get("extractor_key", "").lower()
 
         if extractor == "youtube":
@@ -181,14 +164,4 @@ class MapeoMetadatos:
         if extractor == "vimeo":
             return Plataforma.VIMEO
 
-        #if extractor == "tiktok":
-        #    return Plataforma.TIKTOK
-
         return Plataforma.DESCONOCIDA
-    
-
-    #def _validar_formato(self, formato: dict) -> bool:
-    #    return (
-    #        #formato.get("vcodec") != "none" and formato.get("acodec") != "none"
-    #        formato.get("acodec") != "none"
-    #)
