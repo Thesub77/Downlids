@@ -1,7 +1,54 @@
 const formulario = document.getElementById("form-metadatos");
 const urlInput = document.getElementById("url");
+const plataformaSelect = document.getElementById("plataforma-select");
 
 let urlActual = "";
+let plataformaActual = "";
+
+if (plataformaSelect) {
+    plataformaSelect.addEventListener("change", actualizarPlaceholder);
+}
+
+function actualizarPlaceholder() {
+    const valor = plataformaSelect.value;
+    if (valor === "youtube") {
+        urlInput.placeholder = "Pega aquí el enlace de YouTube...";
+    } else if (valor === "tiktok") {
+        urlInput.placeholder = "Pega aquí el enlace de TikTok (tiktok.com o vm.tiktok.com)...";
+    } else {
+        urlInput.placeholder = "Pega aquí el enlace del video...";
+    }
+}
+
+function validarCoincidenciaPlataforma(url, plataforma) {
+    if (!plataforma || plataforma === "auto") {
+        return null;
+    }
+
+    let host = "";
+    try {
+        const urlObj = new URL(url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`);
+        host = urlObj.hostname.toLowerCase();
+    } catch {
+        return null; // Dejamos que el backend maneje el formato de URL inválido
+    }
+
+    const dominiosYouTube = ["youtube.com", "youtu.be"];
+    const dominiosTikTok = ["tiktok.com", "tiktokv.com"];
+
+    const esYouTube = dominiosYouTube.some(d => host === d || host.endsWith("." + d));
+    const esTikTok = dominiosTikTok.some(d => host === d || host.endsWith("." + d));
+
+    if (plataforma === "youtube" && !esYouTube) {
+        return "El enlace ingresado no corresponde a YouTube.";
+    }
+
+    if (plataforma === "tiktok" && !esTikTok) {
+        return "El enlace ingresado no corresponde a TikTok.";
+    }
+
+    return null;
+}
 
 formulario.addEventListener("submit", manejarFormulario);
 
@@ -9,10 +56,30 @@ async function manejarFormulario(event){
 
     event.preventDefault();
 
-    const url = urlInput.value.trim();
+    let url = urlInput.value.trim();
+    if(!url){
+        return;
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = `https://${url}`;
+    }
+
     urlActual = url;
 
-    if(!url){
+    const plataformaSeleccionada = plataformaSelect ? plataformaSelect.value : null;
+    plataformaActual = plataformaSeleccionada;
+
+    // Validación en frontend para respuesta instantánea
+    const errorValidacion = validarCoincidenciaPlataforma(url, plataformaSeleccionada);
+    if (errorValidacion) {
+        if (typeof resultado !== "undefined" && resultado) {
+            resultado.classList.add("oculto");
+        }
+        if (typeof limpiarFormatos === "function") {
+            limpiarFormatos();
+        }
+        mostrarMensaje(errorValidacion, "error");
         return;
     }
 
@@ -25,7 +92,7 @@ async function manejarFormulario(event){
 
     try{
 
-        const datos = await obtenerMetadatos(url);
+        const datos = await obtenerMetadatos(url, plataformaSeleccionada);
 
         mostrarMensaje(
             "Metadatos obtenidos correctamente.",
@@ -35,17 +102,25 @@ async function manejarFormulario(event){
 
         mostrarFormatos(datos.formatos);
 
-        desbloquearBoton(boton)
+        desbloquearBoton(boton);
 
     }catch(error){
-        console.log(error)
+        console.error(error);
+        if (typeof resultado !== "undefined" && resultado) {
+            resultado.classList.add("oculto");
+        }
+        if (typeof limpiarFormatos === "function") {
+            limpiarFormatos();
+        }
         mostrarMensaje(
-            "No fue posible obtener los metadatos.",
+            error.message || "No fue posible obtener los metadatos.",
             "error"
         );
 
-        desbloquearBoton(boton)
+        desbloquearBoton(boton);
 
     }
 
 }
+
+

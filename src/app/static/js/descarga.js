@@ -11,9 +11,10 @@ function manejarClickDescarga(event){
     bloquearBoton(boton, "Preparando...");
 
     const formato = boton.dataset.id;
+    const platParam = (typeof plataformaActual !== "undefined" && plataformaActual) ? `&plataforma=${encodeURIComponent(plataformaActual)}` : "";
 
     const urlDescarga =
-        `/descarga?url=${encodeURIComponent(urlActual)}&formato=${encodeURIComponent(formato)}`;
+        `/descarga?url=${encodeURIComponent(urlActual)}&formato=${encodeURIComponent(formato)}${platParam}`;
 
     const enlace = document.createElement("a");
     enlace.href = urlDescarga;

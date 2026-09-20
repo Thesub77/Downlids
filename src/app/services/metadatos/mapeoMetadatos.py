@@ -136,13 +136,18 @@ class MapeoMetadatos:
         return f"{tamano:.1f} {unidades[indice]}"
 
     def _obtener_titulo(self, info: dict) -> str:
-        return info.get("title", "")
+        return (
+            info.get("title")
+            or info.get("description")
+            or f"Video de {self._obtener_autor(info)}"
+        )
 
     def _obtener_autor(self, info: dict) -> str:
         return (
             info.get("uploader")
             or info.get("channel")
             or info.get("creator")
+            or info.get("uploader_id")
             or "Autor desconocido"
         )
 
@@ -158,10 +163,13 @@ class MapeoMetadatos:
     def _obtener_plataforma(self, info: dict) -> Plataforma:
         extractor = info.get("extractor_key", "").lower()
 
-        if extractor == "youtube":
+        if "youtube" in extractor:
             return Plataforma.YOUTUBE
 
-        if extractor == "vimeo":
+        if "tiktok" in extractor or "vm.tiktok" in extractor:
+            return Plataforma.TIKTOK
+
+        if "vimeo" in extractor:
             return Plataforma.VIMEO
 
         return Plataforma.DESCONOCIDA

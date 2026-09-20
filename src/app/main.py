@@ -15,6 +15,17 @@ app = FastAPI(
     version=APP_VERSION
 )
 
+
+@app.middleware("http")
+async def no_cache_static_middleware(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 app.mount(
     "/static",
     StaticFiles(directory=STATIC_DIR),

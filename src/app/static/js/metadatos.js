@@ -6,7 +6,7 @@ const duracion = document.getElementById("duracion");
 const vistas = document.getElementById("vistas");
 const plataforma = document.getElementById("plataforma");
 
-async function obtenerMetadatos(url){
+async function obtenerMetadatos(url, plataformaSeleccionada){
 
     const respuesta = await fetch("/metadata/metadatos",{
 
@@ -17,14 +17,17 @@ async function obtenerMetadatos(url){
         },
 
         body:JSON.stringify({
-            url:url
+            url: url,
+            plataforma: plataformaSeleccionada || null
         })
 
     });
 
     if(!respuesta.ok){
-        throw new Error();
+        const errorData = await respuesta.json().catch(() => ({}));
+        throw new Error(errorData.detail || "No fue posible obtener los metadatos.");
     }
+
 
     return await respuesta.json();
 

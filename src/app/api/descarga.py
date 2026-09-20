@@ -13,9 +13,14 @@ servicio = ServicioDescarga()
 
 
 @router.get("/descarga")
-def descargar(url: str, formato: str):
+def descargar(url: str, formato: str, plataforma: str | None = None):
     try:
-        ruta = servicio.descargar(url, formato)
+        ruta = servicio.descargar(url, formato, plataforma)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,

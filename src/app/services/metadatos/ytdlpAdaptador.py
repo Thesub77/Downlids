@@ -9,17 +9,19 @@ from app.utils.ffmpeg import obtener_ruta_ffmpeg
 class YtdlpAdaptador:
 
     def obtener_informacion(self, url: str) -> dict:
+        es_youtube = "youtube.com" in url or "youtu.be" in url
         opciones = {
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
             "ffmpeg_location": obtener_ruta_ffmpeg(),
-            "extractor_args": {
+        }
+        if es_youtube:
+            opciones["extractor_args"] = {
                 "youtube": {
                     "player_client": ["default", "android"]
                 }
             }
-        }
 
         with YoutubeDL(opciones) as ydl:
             return ydl.extract_info(url, download=False)
@@ -36,21 +38,25 @@ class YtdlpAdaptador:
             formato_descarga = f"{formato}+bestaudio/best"
             merge_format = "mp4"
 
+        es_youtube = "youtube.com" in url or "youtu.be" in url
         opciones = {
             "format": formato_descarga,
             "outtmpl": str(carpeta_temporal / "%(title)s.%(ext)s"),
             "quiet": True,
             "no_warnings": True,
             "ffmpeg_location": obtener_ruta_ffmpeg(),
-            "extractor_args": {
+        }
+
+        if es_youtube:
+            opciones["extractor_args"] = {
                 "youtube": {
                     "player_client": ["default", "android"]
                 }
             }
-        }
 
         if merge_format:
             opciones["merge_output_format"] = merge_format
+
 
         try:
             with YoutubeDL(opciones) as ydl:
