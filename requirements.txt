@@ -18,6 +18,8 @@ h11==0.16.0
     # via uvicorn
 idna==3.18
     # via anyio
+imageio-ffmpeg==0.6.0
+    # via downlids
 jinja2==3.1.6
     # via downlids
 markupsafe==3.0.3

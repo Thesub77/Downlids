@@ -3,19 +3,20 @@ from pathlib import Path
 
 from yt_dlp import YoutubeDL
 from app.utils.archivos import eliminar_carpeta_temporal
+from app.utils.ffmpeg import obtener_ruta_ffmpeg
 
 
 class YtdlpAdaptador:
 
     def obtener_informacion(self, url: str) -> dict:
-
         opciones = {
             "quiet": True,
             "no_warnings": True,
             "skip_download": True,
+            "ffmpeg_location": obtener_ruta_ffmpeg(),
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web"]
+                    "player_client": ["default", "android"]
                 }
             }
         }
@@ -23,22 +24,33 @@ class YtdlpAdaptador:
         with YoutubeDL(opciones) as ydl:
             return ydl.extract_info(url, download=False)
 
-
     def descargar_video(self, url: str, formato: str):
-
         carpeta_temporal = Path(tempfile.mkdtemp())
 
+        # Si el usuario seleccionó la opción de sólo audio
+        if formato == "bestaudio" or formato in ["140", "251", "249", "250"]:
+            formato_descarga = "bestaudio[ext=m4a]/bestaudio"
+            merge_format = None
+        else:
+            # Video: si es adaptativo, yt-dlp combina con bestaudio usando ffmpeg y genera MP4
+            formato_descarga = f"{formato}+bestaudio/best"
+            merge_format = "mp4"
+
         opciones = {
-            "format": formato,
+            "format": formato_descarga,
             "outtmpl": str(carpeta_temporal / "%(title)s.%(ext)s"),
             "quiet": True,
             "no_warnings": True,
+            "ffmpeg_location": obtener_ruta_ffmpeg(),
             "extractor_args": {
                 "youtube": {
-                    "player_client": ["android", "web"]
+                    "player_client": ["default", "android"]
                 }
             }
         }
+
+        if merge_format:
+            opciones["merge_output_format"] = merge_format
 
         try:
             with YoutubeDL(opciones) as ydl:
@@ -57,5 +69,3 @@ class YtdlpAdaptador:
         except Exception:
             eliminar_carpeta_temporal(carpeta_temporal)
             raise
-
-        
