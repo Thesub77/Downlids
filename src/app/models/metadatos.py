@@ -3,6 +3,7 @@ from enum import Enum
 
 class Plataforma(str, Enum):
     YOUTUBE = "YouTube"
+    TIKTOK = "TikTok"
     VIMEO = "Vimeo"
     DESCONOCIDA = "Desconocida"
 
@@ -14,6 +15,8 @@ class TipoFormato(str, Enum):
 
 class SolicitudMetadatos(BaseModel):
     url: HttpUrl
+    plataforma: str | None = None
+
 
 class FormatoVideo(BaseModel):
     id: str

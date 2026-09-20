@@ -1,3 +1,7 @@
+# Para la ejecución de este test se debe especificar la carpeta raíz del código fuente (src) en PYTHONPATH:
+# PowerShell: $env:PYTHONPATH="src"; uv run python -m unittest tests/test_descarga.py
+# Bash:       PYTHONPATH=src uv run python -m unittest tests/test_descarga.py
+
 import unittest
 from pathlib import Path
 from fastapi import HTTPException

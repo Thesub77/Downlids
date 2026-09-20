@@ -30,14 +30,37 @@ h1{
 .busqueda form{
     display:flex;
     gap:10px;
+    flex-wrap:wrap;
+}
+
+.select-plataforma{
+    padding:12px 14px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    font-size:15px;
+    background:#ffffff;
+    color:#333;
+    font-weight:600;
+    cursor:pointer;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+.select-plataforma:focus,
+.busqueda input:focus{
+    border-color:#1976d2;
+    box-shadow:0 0 0 3px rgba(25, 118, 210, 0.15);
 }
 
 .busqueda input{
     flex:1;
+    min-width:240px;
     padding:12px;
     border:1px solid #ccc;
     border-radius:8px;
     font-size:16px;
+    outline:none;
+    transition:border-color 0.2s, box-shadow 0.2s;
 }
 
 .busqueda button{
