@@ -6,6 +6,7 @@ class ValidadorURL:
 
     DOMINIOS_YOUTUBE = ["youtube.com", "youtu.be"]
     DOMINIOS_TIKTOK = ["tiktok.com", "tiktokv.com"]
+    DOMINIOS_INSTAGRAM = ["instagram.com", "instagr.am"]
 
     def _coincide_dominio(self, host: str, dominios: list[str]) -> bool:
         return any(host == d or host.endswith("." + d) for d in dominios)
@@ -24,6 +25,9 @@ class ValidadorURL:
         if self._coincide_dominio(host, self.DOMINIOS_TIKTOK):
             return Plataforma.TIKTOK
 
+        if self._coincide_dominio(host, self.DOMINIOS_INSTAGRAM):
+            return Plataforma.INSTAGRAM
+
         return Plataforma.DESCONOCIDA
 
     def validar(self, url: str, plataforma_esperada: str | None = None) -> Plataforma:
@@ -35,20 +39,25 @@ class ValidadorURL:
 
         if not plataforma_esperada or plataforma_esperada.strip().lower() in ("auto", "todas"):
             if plataforma_detectada == Plataforma.DESCONOCIDA:
-                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok).")
+                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram).")
             return plataforma_detectada
 
         plataforma_key = plataforma_esperada.strip().lower()
 
-        if plataforma_key == "youtube":
+        if plataforma_key in ("youtube", "yt"):
             if plataforma_detectada != Plataforma.YOUTUBE:
                 raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (YouTube).")
             return Plataforma.YOUTUBE
 
-        elif plataforma_key == "tiktok":
+        elif plataforma_key in ("tiktok", "tt"):
             if plataforma_detectada != Plataforma.TIKTOK:
                 raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (TikTok).")
             return Plataforma.TIKTOK
+
+        elif plataforma_key in ("instagram", "ig"):
+            if plataforma_detectada != Plataforma.INSTAGRAM:
+                raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Instagram).")
+            return Plataforma.INSTAGRAM
 
         else:
             if plataforma_detectada == Plataforma.DESCONOCIDA:

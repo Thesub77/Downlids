@@ -111,6 +111,19 @@ class MapeoMetadatos:
                 )
             )
 
+        if not resultado and formatos:
+            f = formatos[-1]
+            tam = f.get("filesize") or f.get("filesize_approx") or 0
+            resultado.append(
+                FormatoVideo(
+                    id=f.get("format_id", "best"),
+                    calidad=f.get("format_note") or "Estándar",
+                    extension=f.get("ext", "mp4").upper(),
+                    tipo=TipoFormato.VIDEO_AUDIO,
+                    tamano=self._formatear_bytes(tam) if tam else None
+                )
+            )
+
         return resultado
 
     def _formatear_etiqueta_calidad(self, altura: int) -> str:
@@ -168,6 +181,9 @@ class MapeoMetadatos:
 
         if "tiktok" in extractor or "vm.tiktok" in extractor:
             return Plataforma.TIKTOK
+
+        if "instagram" in extractor:
+            return Plataforma.INSTAGRAM
 
         if "vimeo" in extractor:
             return Plataforma.VIMEO

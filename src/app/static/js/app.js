@@ -15,6 +15,8 @@ function actualizarPlaceholder() {
         urlInput.placeholder = "Pega aquí el enlace de YouTube...";
     } else if (valor === "tiktok") {
         urlInput.placeholder = "Pega aquí el enlace de TikTok (tiktok.com o vm.tiktok.com)...";
+    } else if (valor === "instagram") {
+        urlInput.placeholder = "Pega aquí el enlace de Instagram (Reel o publicación)...";
     } else {
         urlInput.placeholder = "Pega aquí el enlace del video...";
     }
@@ -35,9 +37,11 @@ function validarCoincidenciaPlataforma(url, plataforma) {
 
     const dominiosYouTube = ["youtube.com", "youtu.be"];
     const dominiosTikTok = ["tiktok.com", "tiktokv.com"];
+    const dominiosInstagram = ["instagram.com", "instagr.am"];
 
     const esYouTube = dominiosYouTube.some(d => host === d || host.endsWith("." + d));
     const esTikTok = dominiosTikTok.some(d => host === d || host.endsWith("." + d));
+    const esInstagram = dominiosInstagram.some(d => host === d || host.endsWith("." + d));
 
     if (plataforma === "youtube" && !esYouTube) {
         return "El enlace ingresado no corresponde a YouTube.";
@@ -45,6 +49,10 @@ function validarCoincidenciaPlataforma(url, plataforma) {
 
     if (plataforma === "tiktok" && !esTikTok) {
         return "El enlace ingresado no corresponde a TikTok.";
+    }
+
+    if (plataforma === "instagram" && !esInstagram) {
+        return "El enlace ingresado no corresponde a Instagram.";
     }
 
     return null;

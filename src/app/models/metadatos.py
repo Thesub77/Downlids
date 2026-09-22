@@ -4,6 +4,7 @@ from enum import Enum
 class Plataforma(str, Enum):
     YOUTUBE = "YouTube"
     TIKTOK = "TikTok"
+    INSTAGRAM = "Instagram"
     VIMEO = "Vimeo"
     DESCONOCIDA = "Desconocida"
 
