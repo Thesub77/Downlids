@@ -19,6 +19,9 @@ APP_VERSION = "0.1.0"
 MAX_DOWNLOAD_SIZE_MB = 500
 SUPPORTED_PLATFORMS = [
     "YouTube",
+    "TikTok",
+    "Instagram",
+    "Twitch",
     "Vimeo",
     "Desconocida"
 ]

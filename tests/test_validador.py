@@ -52,6 +52,21 @@ class TestValidadorURL(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.INSTAGRAM)
 
+    def test_identificar_twitch(self):
+        urls_twitch = [
+            "https://www.twitch.tv/eslcs/clip/SmellyPoorOilSpicyBoy-DiSI09y5WQp6Tlir",
+            "https://clips.twitch.tv/GloriousTangibleTrollTinyFace",
+            "https://m.twitch.tv/streamer/clip/ClipSlug",
+            "https://www.twitch.tv/videos/2881273111",
+            "https://twitch.tv/videos/2881273111",
+            "https://www.twitch.tv/streamer/v/123456789",
+            "clips.twitch.tv/GloriousTangibleTrollTinyFace",
+            "twitch.tv/videos/2881273111",
+        ]
+        for url in urls_twitch:
+            with self.subTest(url=url):
+                self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.TWITCH)
+
     def test_identificar_desconocida(self):
         urls_desconocidas = [
             "https://example.com/video",
@@ -88,6 +103,15 @@ class TestValidadorURL(unittest.TestCase):
             Plataforma.INSTAGRAM
         )
 
+        self.assertEqual(
+            self.validador.validar("https://clips.twitch.tv/GloriousTangibleTrollTinyFace", "twitch"),
+            Plataforma.TWITCH
+        )
+        self.assertEqual(
+            self.validador.validar("https://www.twitch.tv/videos/2881273111", "tw"),
+            Plataforma.TWITCH
+        )
+
     def test_validar_coincidencia_incorrecta(self):
         # Enlace de YouTube cuando se seleccionó TikTok
         with self.assertRaises(ValueError) as ctx:
@@ -108,6 +132,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "instagram")
         self.assertIn("no coincide con la plataforma seleccionada (Instagram)", str(ctx.exception))
+
+        # Enlace de Twitch cuando se seleccionó YouTube
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://clips.twitch.tv/GloriousTangibleTrollTinyFace", "youtube")
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", str(ctx.exception))
+
+        # Enlace de YouTube cuando se seleccionó Twitch
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "twitch")
+        self.assertIn("no coincide con la plataforma seleccionada (Twitch)", str(ctx.exception))
 
     def test_validar_url_vacia(self):
         with self.assertRaises(ValueError) as ctx:
@@ -145,6 +179,16 @@ class TestValidadorURL(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
 
+        # Solicitud al endpoint con Twitch URL y plataforma YouTube seleccionada
+        solicitud_tw = SolicitudMetadatos(
+            url="https://clips.twitch.tv/GloriousTangibleTrollTinyFace",
+            plataforma="youtube"
+        )
+        with self.assertRaises(HTTPException) as ctx:
+            obtener_metadatos(solicitud_tw)
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
     def test_descarga_rechaza_plataforma_invalida(self):
         from app.api.descarga import descargar
 
@@ -162,6 +206,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(HTTPException) as ctx:
             descargar(
                 url="https://www.instagram.com/reel/C1234567890/",
+                formato="mp4",
+                plataforma="youtube"
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
+        # Intento de descarga de Twitch con plataforma YouTube
+        with self.assertRaises(HTTPException) as ctx:
+            descargar(
+                url="https://clips.twitch.tv/GloriousTangibleTrollTinyFace",
                 formato="mp4",
                 plataforma="youtube"
             )

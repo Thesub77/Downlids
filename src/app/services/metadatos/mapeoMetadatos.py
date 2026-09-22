@@ -35,33 +35,37 @@ class MapeoMetadatos:
                 continue
 
             # Formatos de video (con o sin audio)
-            if vcodec and vcodec != "none":
-                altura = formato.get("height")
-                if not altura:
-                    resolucion = formato.get("resolution") or ""
-                    if "x" in resolucion:
-                        try:
-                            altura = int(resolucion.split("x")[1])
-                        except Exception:
-                            altura = None
+            altura = formato.get("height")
+            if not altura:
+                resolucion = formato.get("resolution") or ""
+                if "x" in resolucion:
+                    try:
+                        altura = int(resolucion.split("x")[1])
+                    except Exception:
+                        altura = None
 
-                if not altura:
-                    continue
+            if not altura:
+                continue
 
-                tamano = formato.get("filesize") or formato.get("filesize_approx") or 0
-                tiene_tamano = 1 if tamano > 0 else 0
-                es_mp4 = 1 if formato.get("ext", "").lower() == "mp4" else 0
-                es_avc = 1 if "avc" in str(vcodec).lower() else 0
-                tbr = formato.get("tbr") or 0
+            if vcodec == "none":
+                continue
 
-                # Criterio de seleccion: tener tamaño, contenedor MP4, codec H264/AVC, tamaño y bitrate
-                puntuacion = (tiene_tamano, es_mp4, es_avc, tamano, tbr)
+            tamano = formato.get("filesize") or formato.get("filesize_approx") or 0
+            tiene_tamano = 1 if tamano > 0 else 0
+            es_mp4 = 1 if formato.get("ext", "").lower() == "mp4" else 0
+            es_avc = 1 if "avc" in str(vcodec or "").lower() else 0
+            format_id = str(formato.get("format_id", ""))
+            es_landscape = 0 if "portrait" in format_id.lower() else 1
+            tbr = formato.get("tbr") or 0
 
-                if altura not in videos_por_altura or puntuacion > videos_por_altura[altura]["puntuacion"]:
-                    videos_por_altura[altura] = {
-                        "formato": formato,
-                        "puntuacion": puntuacion
-                    }
+            # Criterio de seleccion: tener tamaño, contenedor MP4, orientacion horizontal, codec H264/AVC, tamaño y bitrate
+            puntuacion = (tiene_tamano, es_mp4, es_landscape, es_avc, tamano, tbr)
+
+            if altura not in videos_por_altura or puntuacion > videos_por_altura[altura]["puntuacion"]:
+                videos_por_altura[altura] = {
+                    "formato": formato,
+                    "puntuacion": puntuacion
+                }
 
         mejor_audio = None
         bytes_audio = 0
@@ -184,6 +188,9 @@ class MapeoMetadatos:
 
         if "instagram" in extractor:
             return Plataforma.INSTAGRAM
+
+        if "twitch" in extractor:
+            return Plataforma.TWITCH
 
         if "vimeo" in extractor:
             return Plataforma.VIMEO
