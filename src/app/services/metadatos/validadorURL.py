@@ -8,6 +8,7 @@ class ValidadorURL:
     DOMINIOS_TIKTOK = ["tiktok.com", "tiktokv.com"]
     DOMINIOS_INSTAGRAM = ["instagram.com", "instagr.am"]
     DOMINIOS_TWITCH = ["twitch.tv"]
+    DOMINIOS_KICK = ["kick.com"]
 
     def _coincide_dominio(self, host: str, dominios: list[str]) -> bool:
         return any(host == d or host.endswith("." + d) for d in dominios)
@@ -32,6 +33,9 @@ class ValidadorURL:
         if self._coincide_dominio(host, self.DOMINIOS_TWITCH):
             return Plataforma.TWITCH
 
+        if self._coincide_dominio(host, self.DOMINIOS_KICK):
+            return Plataforma.KICK
+
         return Plataforma.DESCONOCIDA
 
     def validar(self, url: str, plataforma_esperada: str | None = None) -> Plataforma:
@@ -43,7 +47,7 @@ class ValidadorURL:
 
         if not plataforma_esperada or plataforma_esperada.strip().lower() in ("auto", "todas"):
             if plataforma_detectada == Plataforma.DESCONOCIDA:
-                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram, Twitch).")
+                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram, Twitch, Kick).")
             return plataforma_detectada
 
         plataforma_key = plataforma_esperada.strip().lower()
@@ -67,6 +71,11 @@ class ValidadorURL:
             if plataforma_detectada != Plataforma.TWITCH:
                 raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Twitch).")
             return Plataforma.TWITCH
+
+        elif plataforma_key in ("kick", "kc"):
+            if plataforma_detectada != Plataforma.KICK:
+                raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Kick).")
+            return Plataforma.KICK
 
         else:
             if plataforma_detectada == Plataforma.DESCONOCIDA:

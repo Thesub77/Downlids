@@ -118,10 +118,11 @@ class MapeoMetadatos:
         if not resultado and formatos:
             f = formatos[-1]
             tam = f.get("filesize") or f.get("filesize_approx") or 0
+            calidad_nombre = f.get("format_note") or ("Original" if str(f.get("format_id")) in ("0", "best", "") else "Estándar")
             resultado.append(
                 FormatoVideo(
                     id=f.get("format_id", "best"),
-                    calidad=f.get("format_note") or "Estándar",
+                    calidad=calidad_nombre,
                     extension=f.get("ext", "mp4").upper(),
                     tipo=TipoFormato.VIDEO_AUDIO,
                     tamano=self._formatear_bytes(tam) if tam else None
@@ -217,6 +218,9 @@ class MapeoMetadatos:
 
         if "twitch" in extractor:
             return Plataforma.TWITCH
+
+        if "kick" in extractor:
+            return Plataforma.KICK
 
         if "vimeo" in extractor:
             return Plataforma.VIMEO
