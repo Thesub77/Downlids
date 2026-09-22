@@ -35,6 +35,14 @@ def obtener_metadatos(solicitud: SolicitudMetadatos):
             detalle = "Este video es privado y no se puede acceder a su contenido."
         elif "Video unavailable" in mensaje or "This video is unavailable" in mensaje:
             detalle = "El video no se encuentra disponible o el enlace no es válido."
+        elif any(ig_err in mensaje for ig_err in [
+            "Instagram API is not granting access",
+            "empty media response",
+            "login-required",
+            "checkpoint_required",
+            "Please log in"
+        ]):
+            detalle = "Esta publicación o Reel de Instagram es privado o requiere inicio de sesión para acceder."
         else:
             detalle = f"No fue posible obtener los metadatos: {mensaje}"
 
