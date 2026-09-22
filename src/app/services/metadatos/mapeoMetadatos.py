@@ -85,7 +85,7 @@ class MapeoMetadatos:
             else:
                 bytes_totales = (v_bytes + bytes_audio) if v_bytes else 0
 
-            calidad = self._formatear_etiqueta_calidad(altura)
+            calidad = self._formatear_etiqueta_calidad(altura, f)
 
             lista_videos.append(
                 FormatoVideo(
@@ -130,15 +130,41 @@ class MapeoMetadatos:
 
         return resultado
 
-    def _formatear_etiqueta_calidad(self, altura: int) -> str:
-        if altura >= 2160:
+    def _formatear_etiqueta_calidad(self, altura: int, formato: dict | None = None) -> str:
+        ancho = formato.get("width") if formato else None
+        es_vertical = bool(ancho and altura and altura > ancho)
+
+        # Videos verticales (TikTok, Instagram Reels, Shorts, etc.)
+        if es_vertical:
+            if (ancho and ancho >= 2160) or altura >= 3840:
+                return f"{altura}p (4K)"
+            if (ancho and ancho >= 1440) or altura >= 2560:
+                return f"{altura}p (2K)"
+            if (ancho and ancho >= 1000) or altura >= 1700:
+                return f"{altura}p (Full HD)"
+            if (ancho and ancho >= 700) or altura >= 1200:
+                return f"{altura}p (HD)"
+            if (ancho and ancho >= 450) or altura >= 800:
+                return f"{altura}p (SD)"
+            return f"{altura}p"
+
+        # Videos horizontales o cuando no se dispone del ancho
+        if altura >= 2160 or (ancho and ancho >= 3840):
             return f"{altura}p (4K)"
-        if altura == 1440:
-            return f"{altura}p (2K)"
-        if altura == 1080:
+        if 1700 <= altura < 2160:
+            # Resoluciones como 1920p o 1860p (Full HD vertical o panorámico)
             return f"{altura}p (Full HD)"
-        if altura == 720:
+        if 1400 <= altura < 1700 or (ancho and ancho >= 2560):
+            return f"{altura}p (2K)"
+        if 1200 <= altura < 1400:
+            # Resoluciones como 1280p (HD vertical de 720x1280)
             return f"{altura}p (HD)"
+        if 1000 <= altura < 1200 or (ancho and ancho >= 1900):
+            return f"{altura}p (Full HD)"
+        if 700 <= altura < 1000 or (ancho and ancho >= 1200):
+            return f"{altura}p (HD)"
+        if 450 <= altura < 700:
+            return f"{altura}p (SD)"
         return f"{altura}p"
 
     def _formatear_bytes(self, bytes_: int) -> str:
