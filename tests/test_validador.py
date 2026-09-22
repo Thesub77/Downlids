@@ -67,6 +67,20 @@ class TestValidadorURL(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.TWITCH)
 
+    def test_identificar_kick(self):
+        urls_kick = [
+            "https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH",
+            "https://www.kick.com/streamer/clips/clip_12345",
+            "https://kick.com/streamer?clip=clip_12345",
+            "https://kick.com/xqc/videos/24b9ad4f-c68c-486d-8b74-f56154e5ddf4",
+            "https://www.kick.com/streamer/videos/24b9ad4f-c68c-486d-8b74-f56154e5ddf4",
+            "kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH",
+            "kick.com/xqc/videos/24b9ad4f-c68c-486d-8b74-f56154e5ddf4",
+        ]
+        for url in urls_kick:
+            with self.subTest(url=url):
+                self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.KICK)
+
     def test_identificar_desconocida(self):
         urls_desconocidas = [
             "https://example.com/video",
@@ -112,6 +126,15 @@ class TestValidadorURL(unittest.TestCase):
             Plataforma.TWITCH
         )
 
+        self.assertEqual(
+            self.validador.validar("https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH", "kick"),
+            Plataforma.KICK
+        )
+        self.assertEqual(
+            self.validador.validar("https://kick.com/xqc/videos/24b9ad4f-c68c-486d-8b74-f56154e5ddf4", "kc"),
+            Plataforma.KICK
+        )
+
     def test_validar_coincidencia_incorrecta(self):
         # Enlace de YouTube cuando se seleccionó TikTok
         with self.assertRaises(ValueError) as ctx:
@@ -142,6 +165,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "twitch")
         self.assertIn("no coincide con la plataforma seleccionada (Twitch)", str(ctx.exception))
+
+        # Enlace de Kick cuando se seleccionó YouTube
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH", "youtube")
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", str(ctx.exception))
+
+        # Enlace de YouTube cuando se seleccionó Kick
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "kick")
+        self.assertIn("no coincide con la plataforma seleccionada (Kick)", str(ctx.exception))
 
     def test_validar_url_vacia(self):
         with self.assertRaises(ValueError) as ctx:
@@ -189,6 +222,16 @@ class TestValidadorURL(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
 
+        # Solicitud al endpoint con Kick URL y plataforma YouTube seleccionada
+        solicitud_kc = SolicitudMetadatos(
+            url="https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH",
+            plataforma="youtube"
+        )
+        with self.assertRaises(HTTPException) as ctx:
+            obtener_metadatos(solicitud_kc)
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
     def test_descarga_rechaza_plataforma_invalida(self):
         from app.api.descarga import descargar
 
@@ -216,6 +259,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(HTTPException) as ctx:
             descargar(
                 url="https://clips.twitch.tv/GloriousTangibleTrollTinyFace",
+                formato="mp4",
+                plataforma="youtube"
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
+        # Intento de descarga de Kick con plataforma YouTube
+        with self.assertRaises(HTTPException) as ctx:
+            descargar(
+                url="https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH",
                 formato="mp4",
                 plataforma="youtube"
             )

@@ -22,6 +22,7 @@ SUPPORTED_PLATFORMS = [
     "TikTok",
     "Instagram",
     "Twitch",
+    "Kick",
     "Vimeo",
     "Desconocida"
 ]
