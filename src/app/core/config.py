@@ -16,7 +16,8 @@ DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
 # Configuración de la aplicación
 APP_NAME = "Downlids"
 APP_VERSION = "0.1.0"
-MAX_DOWNLOAD_SIZE_MB = 500
+MAX_DOWNLOAD_SIZE_MB = 1024
+MAX_DOWNLOAD_SIZE_BYTES = MAX_DOWNLOAD_SIZE_MB * 1024 * 1024
 SUPPORTED_PLATFORMS = [
     "YouTube",
     "TikTok",
