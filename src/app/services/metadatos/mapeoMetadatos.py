@@ -114,6 +114,16 @@ class MapeoMetadatos:
                     tamano=self._formatear_bytes(bytes_audio) if bytes_audio else None
                 )
             )
+            resultado.insert(
+                1,
+                FormatoVideo(
+                    id="mp3",
+                    calidad="Audio MP3 (192 kbps)",
+                    extension="MP3",
+                    tipo=TipoFormato.SOLO_AUDIO,
+                    tamano=self._formatear_bytes(bytes_audio) if bytes_audio else None
+                )
+            )
 
         if not resultado and formatos:
             f = formatos[-1]
