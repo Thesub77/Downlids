@@ -187,8 +187,33 @@ button:disabled{
 
 }
 
-.oculto{
+.panel-progreso{
+    margin-top:20px;
+    padding:16px;
+    background:#eef4fb;
+    border-radius:8px;
+    border:1px solid #cfe2ff;
+}
 
-    display:none;
+.info-progreso{
+    display:flex;
+    justify-content:space-between;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+    color:#084298;
+}
 
+.barra-progreso-contenedor{
+    width:100%;
+    height:12px;
+    background:#dee2e6;
+    border-radius:6px;
+    overflow:hidden;
+}
+
+.barra-progreso{
+    height:100%;
+    background:#0d6efd;
+    transition:width 0.3s ease;
 }
