@@ -7,6 +7,7 @@ class Plataforma(str, Enum):
     INSTAGRAM = "Instagram"
     TWITCH = "Twitch"
     KICK = "Kick"
+    TELEGRAM = "Telegram"
     VIMEO = "Vimeo"
     DESCONOCIDA = "Desconocida"
 

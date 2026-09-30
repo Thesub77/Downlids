@@ -21,6 +21,8 @@ function actualizarPlaceholder() {
         urlInput.placeholder = "Pega aquí el enlace de Twitch (clip o VOD)...";
     } else if (valor === "kick") {
         urlInput.placeholder = "Pega aquí el enlace de Kick (clip o VOD)...";
+    } else if (valor === "telegram") {
+        urlInput.placeholder = "Pega aquí el enlace de Telegram (t.me/canal/123)...";
     } else {
         urlInput.placeholder = "Pega aquí el enlace del video...";
     }
@@ -44,12 +46,18 @@ function validarCoincidenciaPlataforma(url, plataforma) {
     const dominiosInstagram = ["instagram.com", "instagr.am"];
     const dominiosTwitch = ["twitch.tv"];
     const dominiosKick = ["kick.com"];
+    const dominiosTelegram = ["t.me", "telegram.me"];
 
     const esYouTube = dominiosYouTube.some(d => host === d || host.endsWith("." + d));
     const esTikTok = dominiosTikTok.some(d => host === d || host.endsWith("." + d));
     const esInstagram = dominiosInstagram.some(d => host === d || host.endsWith("." + d));
     const esTwitch = dominiosTwitch.some(d => host === d || host.endsWith("." + d));
     const esKick = dominiosKick.some(d => host === d || host.endsWith("." + d));
+    const esTelegram = dominiosTelegram.some(d => host === d || host.endsWith("." + d));
+
+    if (esTelegram && url.includes("/c/")) {
+        return "Los enlaces de canales privados de Telegram (t.me/c/...) no son accesibles de forma pública.";
+    }
 
     if (plataforma === "youtube" && !esYouTube) {
         return "El enlace ingresado no corresponde a YouTube.";
@@ -69,6 +77,10 @@ function validarCoincidenciaPlataforma(url, plataforma) {
 
     if (plataforma === "kick" && !esKick) {
         return "El enlace ingresado no corresponde a Kick.";
+    }
+
+    if (plataforma === "telegram" && !esTelegram) {
+        return "El enlace ingresado no corresponde a Telegram.";
     }
 
     return null;

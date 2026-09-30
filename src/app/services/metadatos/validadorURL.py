@@ -9,6 +9,7 @@ class ValidadorURL:
     DOMINIOS_INSTAGRAM = ["instagram.com", "instagr.am"]
     DOMINIOS_TWITCH = ["twitch.tv"]
     DOMINIOS_KICK = ["kick.com"]
+    DOMINIOS_TELEGRAM = ["t.me", "telegram.me"]
 
     def _coincide_dominio(self, host: str, dominios: list[str]) -> bool:
         return any(host == d or host.endswith("." + d) for d in dominios)
@@ -36,6 +37,9 @@ class ValidadorURL:
         if self._coincide_dominio(host, self.DOMINIOS_KICK):
             return Plataforma.KICK
 
+        if self._coincide_dominio(host, self.DOMINIOS_TELEGRAM):
+            return Plataforma.TELEGRAM
+
         return Plataforma.DESCONOCIDA
 
     def validar(self, url: str, plataforma_esperada: str | None = None) -> Plataforma:
@@ -45,9 +49,12 @@ class ValidadorURL:
 
         plataforma_detectada = self.identificar_plataforma(url_limpia)
 
+        if plataforma_detectada == Plataforma.TELEGRAM and "/c/" in url_limpia:
+            raise ValueError("Los enlaces de canales privados de Telegram (t.me/c/...) no son accesibles de forma pública.")
+
         if not plataforma_esperada or plataforma_esperada.strip().lower() in ("auto", "todas"):
             if plataforma_detectada == Plataforma.DESCONOCIDA:
-                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram, Twitch, Kick).")
+                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram, Twitch, Kick, Telegram).")
             return plataforma_detectada
 
         plataforma_key = plataforma_esperada.strip().lower()
@@ -76,6 +83,11 @@ class ValidadorURL:
             if plataforma_detectada != Plataforma.KICK:
                 raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Kick).")
             return Plataforma.KICK
+
+        elif plataforma_key in ("telegram", "tg"):
+            if plataforma_detectada != Plataforma.TELEGRAM:
+                raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Telegram).")
+            return Plataforma.TELEGRAM
 
         else:
             if plataforma_detectada == Plataforma.DESCONOCIDA:

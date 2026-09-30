@@ -43,6 +43,15 @@ def obtener_metadatos(solicitud: SolicitudMetadatos):
             "Please log in"
         ]):
             detalle = "Esta publicación o Reel de Instagram es privado o requiere inicio de sesión para acceder."
+        elif "Telegram bloqueó la visualización web" in mensaje or "restricciones de contenido" in mensaje:
+            detalle = mensaje
+        elif any(tg_err in mensaje for tg_err in [
+            "Extractor telegram:embed returned nothing",
+            "telegram:embed",
+            "No fue posible encontrar un video público",
+            "No se encontró información o video en el enlace"
+        ]):
+            detalle = "No fue posible acceder al video de Telegram. El canal o mensaje puede ser privado, tener restricciones de contenido (+18/sensible) o no contener video."
         else:
             detalle = f"No fue posible obtener los metadatos: {mensaje}"
 

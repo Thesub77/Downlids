@@ -81,6 +81,28 @@ class TestValidadorURL(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.KICK)
 
+    def test_identificar_telegram(self):
+        urls_telegram = [
+            "https://t.me/europa_press/613",
+            "https://telegram.me/canal/123",
+            "t.me/canal/123",
+            "https://t.me/s/canal/123",
+        ]
+        for url in urls_telegram:
+            with self.subTest(url=url):
+                self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.TELEGRAM)
+
+    def test_rechaza_canal_privado_telegram(self):
+        urls_privadas = [
+            "https://t.me/c/1234567890/10",
+            "t.me/c/987654321/5",
+        ]
+        for url in urls_privadas:
+            with self.subTest(url=url):
+                with self.assertRaises(ValueError) as ctx:
+                    self.validador.validar(url, "telegram")
+                self.assertIn("canales privados de Telegram", str(ctx.exception))
+
     def test_identificar_desconocida(self):
         urls_desconocidas = [
             "https://example.com/video",
@@ -135,6 +157,15 @@ class TestValidadorURL(unittest.TestCase):
             Plataforma.KICK
         )
 
+        self.assertEqual(
+            self.validador.validar("https://t.me/europa_press/613", "telegram"),
+            Plataforma.TELEGRAM
+        )
+        self.assertEqual(
+            self.validador.validar("https://telegram.me/canal/123", "tg"),
+            Plataforma.TELEGRAM
+        )
+
     def test_validar_coincidencia_incorrecta(self):
         # Enlace de YouTube cuando se seleccionó TikTok
         with self.assertRaises(ValueError) as ctx:
@@ -175,6 +206,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "kick")
         self.assertIn("no coincide con la plataforma seleccionada (Kick)", str(ctx.exception))
+
+        # Enlace de Telegram cuando se seleccionó YouTube
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://t.me/europa_press/613", "youtube")
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", str(ctx.exception))
+
+        # Enlace de YouTube cuando se seleccionó Telegram
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "telegram")
+        self.assertIn("no coincide con la plataforma seleccionada (Telegram)", str(ctx.exception))
 
     def test_validar_url_vacia(self):
         with self.assertRaises(ValueError) as ctx:
@@ -232,6 +273,16 @@ class TestValidadorURL(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
 
+        # Solicitud al endpoint con Telegram URL y plataforma YouTube seleccionada
+        solicitud_tg = SolicitudMetadatos(
+            url="https://t.me/europa_press/613",
+            plataforma="youtube"
+        )
+        with self.assertRaises(HTTPException) as ctx:
+            obtener_metadatos(solicitud_tg)
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
     def test_descarga_rechaza_plataforma_invalida(self):
         from app.api.descarga import descargar
 
@@ -269,6 +320,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(HTTPException) as ctx:
             descargar(
                 url="https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH",
+                formato="mp4",
+                plataforma="youtube"
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
+        # Intento de descarga de Telegram con plataforma YouTube
+        with self.assertRaises(HTTPException) as ctx:
+            descargar(
+                url="https://t.me/europa_press/613",
                 formato="mp4",
                 plataforma="youtube"
             )
