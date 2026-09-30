@@ -25,7 +25,37 @@ class YtdlpAdaptador:
             }
 
         with YoutubeDL(opciones) as ydl:
-            return ydl.extract_info(url, download=False)
+            informacion = ydl.extract_info(url, download=False)
+
+        if not informacion:
+            if "t.me" in url or "telegram.me" in url:
+                error_tg = self._obtener_error_telegram(url)
+                if error_tg:
+                    raise Exception(f"Telegram bloqueó la visualización web de este contenido: '{error_tg}' (Canal con restricciones de contenido +18 o sensible).")
+                raise Exception("No fue posible encontrar un video público en el enlace de Telegram. Asegúrate de que el mensaje contenga un video y el canal sea público.")
+            raise Exception("No fue posible obtener información del enlace. El contenido no se encuentra disponible o ha sido restringido por la plataforma.")
+
+        return informacion
+
+    def _obtener_error_telegram(self, url: str) -> str | None:
+        import urllib.request
+        import re
+
+        url_limpia = url.strip()
+        if not (url_limpia.startswith("http://") or url_limpia.startswith("https://")):
+            url_limpia = f"https://{url_limpia}"
+        base_url = url_limpia.split("?")[0]
+        embed_url = f"{base_url}?embed=1"
+        try:
+            req = urllib.request.Request(embed_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=4) as resp:
+                html = resp.read().decode("utf-8", errors="replace")
+                match = re.search(r'<div class="tgme_widget_message_error"[^>]*>(.*?)</div>', html, re.DOTALL)
+                if match:
+                    return match.group(1).strip()
+        except Exception:
+            pass
+        return None
 
     def descargar_video(self, url: str, formato: str, hook_progreso=None) -> str:
         carpeta_temporal = Path(tempfile.mkdtemp())

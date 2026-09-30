@@ -9,6 +9,8 @@ from app.models.metadatos import (
 class MapeoMetadatos:
 
     def mapear(self, info: dict) -> RespuestaMetadatos:
+        if not info:
+            raise ValueError("No se recibieron datos para mapear.")
 
         return RespuestaMetadatos(
             titulo=self._obtener_titulo(info),
@@ -128,10 +130,10 @@ class MapeoMetadatos:
         if not resultado and formatos:
             f = formatos[-1]
             tam = f.get("filesize") or f.get("filesize_approx") or 0
-            calidad_nombre = f.get("format_note") or ("Original" if str(f.get("format_id")) in ("0", "best", "") else "Estándar")
+            calidad_nombre = f.get("format_note") or "Original"
             resultado.append(
                 FormatoVideo(
-                    id=f.get("format_id", "best"),
+                    id=str(f.get("format_id") or "0"),
                     calidad=calidad_nombre,
                     extension=f.get("ext", "mp4").upper(),
                     tipo=TipoFormato.VIDEO_AUDIO,
@@ -231,6 +233,9 @@ class MapeoMetadatos:
 
         if "kick" in extractor:
             return Plataforma.KICK
+
+        if "telegram" in extractor:
+            return Plataforma.TELEGRAM
 
         if "vimeo" in extractor:
             return Plataforma.VIMEO
