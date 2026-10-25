@@ -208,10 +208,22 @@ class MapeoMetadatos:
         )
 
     def _obtener_duracion(self, info: dict) -> int:
-        return info.get("duration") or 0
+        duracion = info.get("duration")
+        if duracion is None:
+            return 0
+        try:
+            return int(round(float(duracion)))
+        except (ValueError, TypeError):
+            return 0
 
     def _obtener_vistas(self, info: dict) -> int:
-        return info.get("view_count") or 0
+        vistas = info.get("view_count")
+        if vistas is None:
+            return 0
+        try:
+            return int(round(float(vistas)))
+        except (ValueError, TypeError):
+            return 0
 
     def _obtener_miniatura(self, info: dict) -> str:
         return info.get("thumbnail", "")
@@ -237,7 +249,10 @@ class MapeoMetadatos:
         if "telegram" in extractor:
             return Plataforma.TELEGRAM
 
+        if "facebook" in extractor:
+            return Plataforma.FACEBOOK
+
         if "vimeo" in extractor:
             return Plataforma.VIMEO
 
-        return Plataforma.DESCONOCIDA
+        return Plataforma.GENERICA

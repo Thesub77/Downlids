@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Downlids Companion",
+  "version": "1.0.0",
+  "description": "Descarga videos de YouTube, TikTok, Instagram, Twitch, Kick, Telegram y cualquier web con Downlids.",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "cookies",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "http://localhost:8000/*",
+    "*://*/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Downlids Video Downloader",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

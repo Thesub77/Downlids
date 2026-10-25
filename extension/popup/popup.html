@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downlids Companion</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Downlids</h1>
+          <span class="brand-badge">Companion</span>
+        </div>
+      </div>
+      <div id="status-pill" class="status-pill desconectado" title="Estado de conexión con el backend">
+        <span class="status-dot"></span>
+        <span id="status-text">Conectando...</span>
+      </div>
+    </header>
+
+    <!-- Error Servidor Desconectado -->
+    <div id="servidor-offline-panel" class="panel alert-panel oculto">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <h3>Servidor local inactivo</h3>
+        <p>Inicia el backend en tu terminal para habilitar descargas:</p>
+        <code>uv run uvicorn app.main:app --app-dir src --reload</code>
+        <button id="btn-reintentar" class="btn btn-secondary btn-sm">Reintentar conexión</button>
+      </div>
+    </div>
+
+    <!-- Panel URL Pestaña -->
+    <div id="url-panel" class="panel">
+      <div class="input-group">
+        <input type="url" id="input-url" placeholder="Pega o detecta una URL de video..." spellcheck="false">
+        <button id="btn-analizar" class="btn btn-primary" title="Analizar video de esta URL">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sm">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          Analizar
+        </button>
+      </div>
+      <div id="tab-info" class="tab-info">
+        <span id="platform-tag" class="tag">Pestaña actual</span>
+        <span id="tab-domain" class="domain-text">Detectando...</span>
+      </div>
+    </div>
+
+    <!-- Spinner / Cargando -->
+    <div id="loading-panel" class="panel loading-panel oculto">
+      <div class="spinner"></div>
+      <p id="loading-text">Extrayendo información del video...</p>
+    </div>
+
+    <!-- Mensaje Notificación -->
+    <div id="mensaje-panel" class="panel mensaje-panel oculto">
+      <span id="mensaje-texto"></span>
+    </div>
+
+    <!-- Resultado del Video -->
+    <div id="resultado-panel" class="panel resultado-panel oculto">
+      <div class="media-preview">
+        <div class="thumbnail-wrapper">
+          <img id="video-miniatura" src="" alt="Miniatura del video">
+          <span id="video-duracion" class="badge-overlay duracion">--:--</span>
+          <span id="video-plataforma" class="badge-overlay plataforma">Web</span>
+        </div>
+        <div class="video-meta">
+          <h2 id="video-titulo" class="video-titulo" title="">Título del video</h2>
+          <p id="video-autor" class="video-autor">Autor</p>
+        </div>
+      </div>
+
+      <!-- Selector de Formatos -->
+      <div class="formatos-container">
+        <label for="select-formato">Calidad disponible:</label>
+        <select id="select-formato" class="select-formato">
+          <option value="">Cargando calidades...</option>
+        </select>
+      </div>
+
+
+      <!-- Acciones -->
+      <div class="acciones-grid">
+        <button id="btn-descargar" class="btn btn-gradient">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sm">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span id="btn-descargar-texto">Descargar ahora</span>
+        </button>
+
+        <button id="btn-abrir-web" class="btn btn-outline" title="Abrir en la aplicación web completa de Downlids">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-sm">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          Abrir en Web
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>Downlids &bull; Brave & Chromium Extension</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

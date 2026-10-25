@@ -23,19 +23,21 @@
             <form id="form-metadatos">
 
                 <select id="plataforma-select" class="select-plataforma" aria-label="Plataforma de video">
-                    <option value="youtube" selected>YouTube</option>
+                    <option value="auto" selected>Auto (Cualquier web)</option>
+                    <option value="youtube">YouTube</option>
                     <option value="tiktok">TikTok</option>
                     <option value="instagram">Instagram</option>
                     <option value="twitch">Twitch</option>
                     <option value="kick">Kick</option>
                     <option value="telegram">Telegram</option>
-                    <option value="auto">Auto</option>
+                    <option value="facebook">Facebook</option>
+                    <option value="generica">Cualquier otra web</option>
                 </select>
 
                 <input
                     type="url"
                     id="url"
-                    placeholder="Pega aquí el enlace de YouTube..."
+                    placeholder="Pega aquí cualquier enlace de video o audio..."
                     required
                 >
 

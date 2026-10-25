@@ -92,6 +92,18 @@ class TestValidadorURL(unittest.TestCase):
             with self.subTest(url=url):
                 self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.TELEGRAM)
 
+    def test_identificar_facebook(self):
+        urls_facebook = [
+            "https://www.facebook.com/watch/?v=407595374691681",
+            "https://facebook.com/reel/123456789",
+            "https://fb.watch/abc123xyz/",
+            "https://m.facebook.com/watch/?v=407595374691681",
+            "fb.com/watch/?v=123",
+        ]
+        for url in urls_facebook:
+            with self.subTest(url=url):
+                self.assertEqual(self.validador.identificar_plataforma(url), Plataforma.FACEBOOK)
+
     def test_rechaza_canal_privado_telegram(self):
         urls_privadas = [
             "https://t.me/c/1234567890/10",
@@ -165,6 +177,14 @@ class TestValidadorURL(unittest.TestCase):
             self.validador.validar("https://telegram.me/canal/123", "tg"),
             Plataforma.TELEGRAM
         )
+        self.assertEqual(
+            self.validador.validar("https://www.facebook.com/watch/?v=407595374691681", "facebook"),
+            Plataforma.FACEBOOK
+        )
+        self.assertEqual(
+            self.validador.validar("https://fb.watch/abc123xyz/", "fb"),
+            Plataforma.FACEBOOK
+        )
 
     def test_validar_coincidencia_incorrecta(self):
         # Enlace de YouTube cuando se seleccionó TikTok
@@ -216,6 +236,16 @@ class TestValidadorURL(unittest.TestCase):
         with self.assertRaises(ValueError) as ctx:
             self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "telegram")
         self.assertIn("no coincide con la plataforma seleccionada (Telegram)", str(ctx.exception))
+
+        # Enlace de Facebook cuando se seleccionó YouTube
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://www.facebook.com/watch/?v=407595374691681", "youtube")
+        self.assertIn("no coincide con la plataforma seleccionada (YouTube)", str(ctx.exception))
+
+        # Enlace de YouTube cuando se seleccionó Facebook
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "facebook")
+        self.assertIn("no coincide con la plataforma seleccionada (Facebook)", str(ctx.exception))
 
     def test_validar_url_vacia(self):
         with self.assertRaises(ValueError) as ctx:
@@ -335,6 +365,66 @@ class TestValidadorURL(unittest.TestCase):
             )
         self.assertEqual(ctx.exception.status_code, 400)
         self.assertIn("no coincide con la plataforma seleccionada (YouTube)", ctx.exception.detail)
+
+    def test_validar_modo_auto_plataformas_especificas(self):
+        self.assertEqual(
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "auto"),
+            Plataforma.YOUTUBE
+        )
+        self.assertEqual(
+            self.validador.validar("https://www.tiktok.com/@usuario/video/7106594312292453678", "auto"),
+            Plataforma.TIKTOK
+        )
+        self.assertEqual(
+            self.validador.validar("https://www.instagram.com/reel/C1234567890/", "auto"),
+            Plataforma.INSTAGRAM
+        )
+        self.assertEqual(
+            self.validador.validar("https://clips.twitch.tv/GloriousTangibleTrollTinyFace", "auto"),
+            Plataforma.TWITCH
+        )
+        self.assertEqual(
+            self.validador.validar("https://kick.com/xqc/clips/clip_01H811MXG4FBR62FXPE1AXABDH", "auto"),
+            Plataforma.KICK
+        )
+        self.assertEqual(
+            self.validador.validar("https://t.me/europa_press/613", "auto"),
+            Plataforma.TELEGRAM
+        )
+        self.assertEqual(
+            self.validador.validar("https://www.facebook.com/watch/?v=407595374691681", "auto"),
+            Plataforma.FACEBOOK
+        )
+
+    def test_validar_modo_auto_plataforma_generica(self):
+        urls_genericas = [
+            "https://soundcloud.com/artist/sample-track",
+            "https://reddit.com/r/videos/comments/xyz123/cool_video/",
+            "https://x.com/usuario/status/1234567890",
+            "https://dailymotion.com/video/x7tgad0",
+        ]
+        for url in urls_genericas:
+            with self.subTest(url=url):
+                self.assertEqual(
+                    self.validador.validar(url, "auto"),
+                    Plataforma.GENERICA
+                )
+
+    def test_validar_modo_generica_explicito(self):
+        self.assertEqual(
+            self.validador.validar("https://soundcloud.com/artist/sample-track", "generica"),
+            Plataforma.GENERICA
+        )
+        # Si es una plataforma conocida pero se seleccionó genérica, se acepta
+        self.assertEqual(
+            self.validador.validar("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "generica"),
+            Plataforma.YOUTUBE
+        )
+
+    def test_validar_url_sintaxis_invalida(self):
+        with self.assertRaises(ValueError) as ctx:
+            self.validador.validar("esto_no_es_una_url", "auto")
+        self.assertIn("no es válida", str(ctx.exception))
 
 
 if __name__ == "__main__":

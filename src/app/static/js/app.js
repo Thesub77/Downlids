@@ -11,7 +11,11 @@ if (plataformaSelect) {
 
 function actualizarPlaceholder() {
     const valor = plataformaSelect.value;
-    if (valor === "youtube") {
+    if (valor === "auto") {
+        urlInput.placeholder = "Pega aquí cualquier enlace de video o audio...";
+    } else if (valor === "generica") {
+        urlInput.placeholder = "Pega aquí el enlace de la web (Vimeo, SoundCloud, etc.)...";
+    } else if (valor === "youtube") {
         urlInput.placeholder = "Pega aquí el enlace de YouTube...";
     } else if (valor === "tiktok") {
         urlInput.placeholder = "Pega aquí el enlace de TikTok (tiktok.com o vm.tiktok.com)...";
@@ -23,13 +27,15 @@ function actualizarPlaceholder() {
         urlInput.placeholder = "Pega aquí el enlace de Kick (clip o VOD)...";
     } else if (valor === "telegram") {
         urlInput.placeholder = "Pega aquí el enlace de Telegram (t.me/canal/123)...";
+    } else if (valor === "facebook") {
+        urlInput.placeholder = "Pega aquí el enlace de Facebook (facebook.com o fb.watch)...";
     } else {
         urlInput.placeholder = "Pega aquí el enlace del video...";
     }
 }
 
 function validarCoincidenciaPlataforma(url, plataforma) {
-    if (!plataforma || plataforma === "auto") {
+    if (!plataforma || plataforma === "auto" || plataforma === "generica") {
         return null;
     }
 
@@ -47,6 +53,7 @@ function validarCoincidenciaPlataforma(url, plataforma) {
     const dominiosTwitch = ["twitch.tv"];
     const dominiosKick = ["kick.com"];
     const dominiosTelegram = ["t.me", "telegram.me"];
+    const dominiosFacebook = ["facebook.com", "fb.watch", "fb.com", "m.facebook.com"];
 
     const esYouTube = dominiosYouTube.some(d => host === d || host.endsWith("." + d));
     const esTikTok = dominiosTikTok.some(d => host === d || host.endsWith("." + d));
@@ -54,6 +61,7 @@ function validarCoincidenciaPlataforma(url, plataforma) {
     const esTwitch = dominiosTwitch.some(d => host === d || host.endsWith("." + d));
     const esKick = dominiosKick.some(d => host === d || host.endsWith("." + d));
     const esTelegram = dominiosTelegram.some(d => host === d || host.endsWith("." + d));
+    const esFacebook = dominiosFacebook.some(d => host === d || host.endsWith("." + d));
 
     if (esTelegram && url.includes("/c/")) {
         return "Los enlaces de canales privados de Telegram (t.me/c/...) no son accesibles de forma pública.";
@@ -81,6 +89,10 @@ function validarCoincidenciaPlataforma(url, plataforma) {
 
     if (plataforma === "telegram" && !esTelegram) {
         return "El enlace ingresado no corresponde a Telegram.";
+    }
+
+    if (plataforma === "facebook" && !esFacebook) {
+        return "El enlace ingresado no corresponde a Facebook.";
     }
 
     return null;
@@ -158,5 +170,18 @@ async function manejarFormulario(event){
     }
 
 }
+
+// Carga automática si se abre con ?url= (desde la extensión)
+window.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const urlParam = params.get("url");
+    if (urlParam) {
+        urlInput.value = urlParam;
+        if (plataformaSelect) {
+            plataformaSelect.value = "auto";
+        }
+        formulario.dispatchEvent(new Event("submit"));
+    }
+});
 
 
