@@ -20,7 +20,8 @@ def obtener_metadatos(solicitud: SolicitudMetadatos):
     try:
         return servicio.obtener_metadatos(
             str(solicitud.url),
-            solicitud.plataforma
+            solicitud.plataforma,
+            cookies=solicitud.cookies
         )
     except ValueError as e:
         raise HTTPException(
@@ -43,7 +44,7 @@ def obtener_metadatos(solicitud: SolicitudMetadatos):
             "Please log in"
         ]):
             detalle = "Esta publicación o Reel de Instagram es privado o requiere inicio de sesión para acceder."
-        elif "Telegram bloqueó la visualización web" in mensaje or "restricciones de contenido" in mensaje:
+        elif "Telegram bloqueó" in mensaje or "Restringir guardar contenido" in mensaje or "restricciones de contenido" in mensaje or "protección contra copias" in mensaje:
             detalle = mensaje
         elif any(tg_err in mensaje for tg_err in [
             "Extractor telegram:embed returned nothing",
@@ -51,7 +52,20 @@ def obtener_metadatos(solicitud: SolicitudMetadatos):
             "No fue posible encontrar un video público",
             "No se encontró información o video en el enlace"
         ]):
-            detalle = "No fue posible acceder al video de Telegram. El canal o mensaje puede ser privado, tener restricciones de contenido (+18/sensible) o no contener video."
+            detalle = (
+                "No fue posible acceder al video de Telegram. "
+                "Telegram no utiliza sesiones web basadas en cookies HTTP (funciona mediante su protocolo nativo MTProto en WebSockets/IndexedDB). "
+                "Por esa razón, solo videos públicos accesibles sin restricciones en la web pueden extraerse. "
+                "Si el grupo/canal tiene activado 'Restringir guardar contenido' (noforwards), es un tema privado o el video se subió como archivo/documento, Telegram no permite la descarga web."
+            )
+        elif any(fb_err in mensaje for fb_err in [
+            "Cannot parse data",
+            "[facebook]",
+            "facebook.com",
+            "logged in users",
+            "Log in to Facebook"
+        ]):
+            detalle = "Facebook no permitió acceder a este video de forma anónima (requiere sesión o es privado). Si utilizas la extensión Downlids Companion con tu sesión de Facebook activa, o colocas un archivo 'cookies.txt' en el servidor, podrás descargarlo."
         else:
             detalle = f"No fue posible obtener los metadatos: {mensaje}"
 

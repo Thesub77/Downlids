@@ -10,6 +10,8 @@ class ValidadorURL:
     DOMINIOS_TWITCH = ["twitch.tv"]
     DOMINIOS_KICK = ["kick.com"]
     DOMINIOS_TELEGRAM = ["t.me", "telegram.me"]
+    DOMINIOS_FACEBOOK = ["facebook.com", "fb.watch", "fb.com", "m.facebook.com"]
+    DOMINIOS_VIMEO = ["vimeo.com"]
 
     def _coincide_dominio(self, host: str, dominios: list[str]) -> bool:
         return any(host == d or host.endswith("." + d) for d in dominios)
@@ -40,12 +42,25 @@ class ValidadorURL:
         if self._coincide_dominio(host, self.DOMINIOS_TELEGRAM):
             return Plataforma.TELEGRAM
 
+        if self._coincide_dominio(host, self.DOMINIOS_FACEBOOK):
+            return Plataforma.FACEBOOK
+
+        if self._coincide_dominio(host, self.DOMINIOS_VIMEO):
+            return Plataforma.VIMEO
+
         return Plataforma.DESCONOCIDA
 
     def validar(self, url: str, plataforma_esperada: str | None = None) -> Plataforma:
         url_limpia = url.strip()
         if not url_limpia:
             raise ValueError("La URL no puede estar vacía.")
+
+        if not (url_limpia.startswith("http://") or url_limpia.startswith("https://")):
+            url_limpia = f"https://{url_limpia}"
+
+        parsed = urlparse(url_limpia)
+        if not parsed.netloc or ("." not in parsed.netloc and parsed.netloc != "localhost"):
+            raise ValueError("La URL proporcionada no es válida.")
 
         plataforma_detectada = self.identificar_plataforma(url_limpia)
 
@@ -54,10 +69,15 @@ class ValidadorURL:
 
         if not plataforma_esperada or plataforma_esperada.strip().lower() in ("auto", "todas"):
             if plataforma_detectada == Plataforma.DESCONOCIDA:
-                raise ValueError("La URL no corresponde a ninguna de las plataformas soportadas (YouTube, TikTok, Instagram, Twitch, Kick, Telegram).")
+                return Plataforma.GENERICA
             return plataforma_detectada
 
         plataforma_key = plataforma_esperada.strip().lower()
+
+        if plataforma_key in ("generica", "general", "cualquiera", "otro", "otra"):
+            if plataforma_detectada != Plataforma.DESCONOCIDA:
+                return plataforma_detectada
+            return Plataforma.GENERICA
 
         if plataforma_key in ("youtube", "yt"):
             if plataforma_detectada != Plataforma.YOUTUBE:
@@ -89,8 +109,18 @@ class ValidadorURL:
                 raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Telegram).")
             return Plataforma.TELEGRAM
 
+        elif plataforma_key in ("facebook", "fb"):
+            if plataforma_detectada != Plataforma.FACEBOOK:
+                raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Facebook).")
+            return Plataforma.FACEBOOK
+
+        elif plataforma_key in ("vimeo", "vm"):
+            if plataforma_detectada != Plataforma.VIMEO:
+                raise ValueError("El enlace proporcionado no coincide con la plataforma seleccionada (Vimeo).")
+            return Plataforma.VIMEO
+
         else:
             if plataforma_detectada == Plataforma.DESCONOCIDA:
-                raise ValueError(f"Plataforma '{plataforma_esperada}' no soportada.")
+                return Plataforma.GENERICA
             return plataforma_detectada
 

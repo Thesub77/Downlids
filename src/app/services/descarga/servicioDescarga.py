@@ -16,17 +16,19 @@ class ServicioDescarga:
         self.validador = ValidadorURL()
         self._descargas: dict[str, dict] = {}
         self._lock = threading.Lock()
+        self._iniciar_limpiador_periodico()
 
-    def descargar(self, url: str, formato: str, plataforma: str | None = None) -> str:
+    def descargar(self, url: str, formato: str, plataforma: str | None = None, cookies: str | None = None) -> str:
         """Descarga síncrona directa (retrocompatibilidad)."""
         self.validador.validar(url, plataforma)
 
         return self.adapter.descargar_video(
             url=url,
-            formato=formato
+            formato=formato,
+            cookies=cookies
         )
 
-    def iniciar_descarga(self, url: str, formato: str, plataforma: str | None = None) -> str:
+    def iniciar_descarga(self, url: str, formato: str, plataforma: str | None = None, cookies: str | None = None) -> str:
         """Inicia una tarea de descarga asíncrona con seguimiento de progreso en tiempo real."""
         self.validador.validar(url, plataforma)
         self._limpiar_expiradas()
@@ -37,6 +39,7 @@ class ServicioDescarga:
             "url": url,
             "formato": formato,
             "plataforma": plataforma,
+            "cookies": cookies,
             "estado": "iniciando",  # iniciando, descargando, procesando, completado, error
             "progreso": 0.0,
             "velocidad": "",
@@ -52,14 +55,14 @@ class ServicioDescarga:
 
         hilo = threading.Thread(
             target=self._ejecutar_descarga,
-            args=(download_id, url, formato),
+            args=(download_id, url, formato, cookies),
             daemon=True
         )
         hilo.start()
 
         return download_id
 
-    def _ejecutar_descarga(self, download_id: str, url: str, formato: str):
+    def _ejecutar_descarga(self, download_id: str, url: str, formato: str, cookies: str | None = None):
         def hook_progreso(d: dict):
             status = d.get("status")
             with self._lock:
@@ -95,7 +98,7 @@ class ServicioDescarga:
                     registro["eta"] = ""
 
         try:
-            ruta = self.adapter.descargar_video(url, formato, hook_progreso=hook_progreso)
+            ruta = self.adapter.descargar_video(url, formato, hook_progreso=hook_progreso, cookies=cookies)
             with self._lock:
                 registro = self._descargas.get(download_id)
                 if registro:
@@ -162,3 +165,37 @@ class ServicioDescarga:
         for _, ruta in expiradas:
             if ruta:
                 eliminar_carpeta_temporal(ruta)
+
+        self._limpiar_temporales_huerfanos(ttl_segundos)
+
+    def _limpiar_temporales_huerfanos(self, ttl_segundos: int = 1800):
+        """Elimina carpetas temporales huérfanas con videos abandonados."""
+        import tempfile
+        ahora = time.time()
+        temp_dir = Path(tempfile.gettempdir())
+        try:
+            for p in temp_dir.iterdir():
+                if p.is_dir() and p.name.startswith("tmp"):
+                    try:
+                        if ahora - p.stat().st_mtime > ttl_segundos:
+                            archivos = list(p.iterdir())
+                            tiene_media = any(f.suffix.lower() in [".mp4", ".m4a", ".mp3", ".webm", ".mkv", ".part"] for f in archivos)
+                            if tiene_media or not archivos:
+                                eliminar_carpeta_temporal(p)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def _iniciar_limpiador_periodico(self):
+        """Hilo daemon que limpia descargas expiradas y temporales huérfanos cada 10 minutos."""
+        def bucle():
+            while True:
+                time.sleep(600)
+                try:
+                    self._limpiar_expiradas()
+                except Exception:
+                    pass
+
+        hilo = threading.Thread(target=bucle, daemon=True)
+        hilo.start()

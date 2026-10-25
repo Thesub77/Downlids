@@ -10,9 +10,9 @@ class ServicioMetadatos:
         self.mapper = MapeoMetadatos()
         self.validador = ValidadorURL()
 
-    def obtener_metadatos(self, url: str, plataforma: str | None = None):
+    def obtener_metadatos(self, url: str, plataforma: str | None = None, cookies: str | None = None):
         self.validador.validar(url, plataforma)
 
-        informacion = self.adapter.obtener_informacion(url)
+        informacion = self.adapter.obtener_informacion(url, cookies=cookies)
 
         return self.mapper.mapear(informacion)

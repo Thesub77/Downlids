@@ -10,9 +10,20 @@ from app.core.config import APP_VERSION
 
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_private_network=True,
 )
 
 
@@ -24,6 +35,15 @@ async def no_cache_static_middleware(request, call_next):
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
     return response
+
+
+@app.get("/api/estado")
+async def estado_servidor():
+    return {
+        "estado": "activo",
+        "nombre": APP_NAME,
+        "version": APP_VERSION
+    }
 
 
 app.mount(

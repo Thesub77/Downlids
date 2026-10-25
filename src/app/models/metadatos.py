@@ -8,7 +8,9 @@ class Plataforma(str, Enum):
     TWITCH = "Twitch"
     KICK = "Kick"
     TELEGRAM = "Telegram"
+    FACEBOOK = "Facebook"
     VIMEO = "Vimeo"
+    GENERICA = "Genérica"
     DESCONOCIDA = "Desconocida"
 
 class TipoFormato(str, Enum):
@@ -20,6 +22,7 @@ class TipoFormato(str, Enum):
 class SolicitudMetadatos(BaseModel):
     url: HttpUrl
     plataforma: str | None = None
+    cookies: str | None = None
 
 
 class FormatoVideo(BaseModel):

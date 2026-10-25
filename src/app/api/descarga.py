@@ -17,6 +17,7 @@ class SolicitudDescarga(BaseModel):
     url: str
     formato: str
     plataforma: str | None = None
+    cookies: str | None = None
 
 
 @router.post("/descarga/iniciar")
@@ -25,7 +26,8 @@ def iniciar_descarga(solicitud: SolicitudDescarga):
         download_id = servicio.iniciar_descarga(
             url=solicitud.url,
             formato=solicitud.formato,
-            plataforma=solicitud.plataforma
+            plataforma=solicitud.plataforma,
+            cookies=solicitud.cookies
         )
         return {"download_id": download_id}
     except ValueError as e:
